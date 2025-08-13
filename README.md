@@ -8,11 +8,15 @@ Order service functionality:
 * gRPC call to Inventory Service to get products info.
 * Save order (status = PENDING) and order items
 * Insert event into outbox in same transaction
+* Another goroutine runs and publish messages to kafka from outbox table
 
 Inventory service functionality:
 
 * gRPC server
 * returns products info
+
+
+Nice to have processed_events table to prevent double consuming from Kafka.
 
 To run microservices use:
 

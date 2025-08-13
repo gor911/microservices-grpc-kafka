@@ -10,7 +10,7 @@ import (
 
 type Outbox struct {
 	ID        uint    `gorm:"primaryKey"`
-	Topic     string  `gorm:"type:string"` // order.created
+	Topic     string  `gorm:"type:string"`
 	Payload   Payload `gorm:"serializer:json"`
 	CreatedAt time.Time
 	SentAt    sql.NullTime
@@ -40,9 +40,3 @@ func NewOutbox(topic string, input dto.CreateOrderInput) *Outbox {
 
 	return o
 }
-
-//type ProcessedEvent struct {
-//	ID          string `gorm:"primaryKey"`
-//	Topic       string
-//	ProcessedAt time.Time
-//}

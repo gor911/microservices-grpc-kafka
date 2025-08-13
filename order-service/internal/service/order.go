@@ -17,6 +17,8 @@ const topicOrderCreated = "order.created"
 
 type Postgres interface {
 	CreateOrder(ctx context.Context, order *domain.Order, outbox *domain.Outbox) error
+	GetOutboxes(ctx context.Context) ([]*domain.Outbox, error)
+	MarkOutboxesAsSent(ctx context.Context, ids []uint) error
 }
 
 type GRPCClient interface {

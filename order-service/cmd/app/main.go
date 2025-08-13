@@ -9,8 +9,10 @@ import (
 
 	"github.com/gor911/microservices-grpc-kafka/order-service/config"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/grpcclient"
+	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/kafkaproducer"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/postgres"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/controller/http"
+	"github.com/gor911/microservices-grpc-kafka/order-service/internal/controller/publisher"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/httpserver"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/logger"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/service"
@@ -46,6 +48,15 @@ func run(ctx context.Context, config config.Config) error {
 	}
 
 	orderService := service.NewOrder(pg, log, inventoryClient)
+	kafkaProducer := kafkaproducer.NewProducer(log, config.KafkaProducer)
+	outboxService := service.NewOutbox(pg, log, kafkaProducer)
+	kafkaPublisher := publisher.New(outboxService)
+
+	go func() {
+		if err := kafkaPublisher.Run(ctx); err != nil {
+			panic(err)
+		}
+	}()
 
 	httpServer := httpserver.New(http.BuildHandler(http.NewHandlers(orderService)), config.HTTP)
 
@@ -75,6 +86,14 @@ func run(ctx context.Context, config config.Config) error {
 
 	if err := inventoryClient.Close(); err != nil {
 		log.Error("could not close inventory client", "error", err)
+	}
+
+	if err := kafkaProducer.Close(); err != nil {
+		log.Error("could not close kafka producer", "error", err)
+	}
+
+	if err := kafkaPublisher.Close(ctx); err != nil {
+		log.Error("could not close kafka publisher worker", "error", err)
 	}
 
 	log.Info("App is shutting down gracefully")

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/grpcclient"
+	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/kafkaproducer"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/postgres"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/httpserver"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/logger"
@@ -25,11 +26,12 @@ type App struct {
 }
 
 type Config struct {
-	App        App
-	HTTP       httpserver.Config
-	GRPCClient grpcclient.Config
-	Postgres   postgres.Config
-	Logger     logger.Config
+	App           App
+	HTTP          httpserver.Config
+	GRPCClient    grpcclient.Config
+	Postgres      postgres.Config
+	Logger        logger.Config
+	KafkaProducer kafkaproducer.Config
 }
 
 func InitConfig() (Config, error) {
@@ -65,6 +67,12 @@ func InitConfig() (Config, error) {
 	}
 
 	c, err = initGRPCClientConfig(c)
+
+	if err != nil {
+		return c, err
+	}
+
+	c, err = initKafkaProducerConfig(c)
 
 	if err != nil {
 		return c, err
@@ -155,6 +163,18 @@ func initGRPCClientConfig(c Config) (Config, error) {
 	if c.GRPCClient.Addr == "" {
 		return c, errors.New("missing INVENTORY_ADDR")
 	}
+
+	return c, nil
+}
+
+func initKafkaProducerConfig(c Config) (Config, error) {
+	brokers := os.Getenv("KAFKA_BROKERS")
+
+	if brokers == "" {
+		return c, errors.New("missing KAFKA_BROKERS")
+	}
+
+	c.KafkaProducer.Brokers = []string{brokers}
 
 	return c, nil
 }

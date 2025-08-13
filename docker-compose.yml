@@ -8,16 +8,17 @@ services:
       - "9092:9092"
     environment:
       # KRaft basics
-      CLUSTER_ID: "q1Sh73bURrGv3Ih3aYhY0Q"         # <-- keep your ID here
+      KAFKA_CLUSTER_ID: "q1Sh73bURrGv3Ih3aYhY0Q"
+      CLUSTER_ID: "q1Sh73bURrGv3Ih3aYhY0Q"
       KAFKA_PROCESS_ROLES: "broker,controller"
       KAFKA_NODE_ID: 1
       KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
       KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
 
       # Listeners (keep it simple)
-      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_HOST://0.0.0.0:29092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
       KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
 
       # Single-broker factors
@@ -34,7 +35,12 @@ services:
       timeout: 5s
       retries: 102
       start_period: 20s
-
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: kafka:9092
   postgres_order:
     image: postgres:17.5
     container_name: postgres_order

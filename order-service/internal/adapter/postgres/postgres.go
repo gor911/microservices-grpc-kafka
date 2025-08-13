@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/domain"
 	"gorm.io/driver/postgres"
@@ -66,4 +67,27 @@ func (p *Postgres) CreateOrder(ctx context.Context, order *domain.Order, outbox 
 	})
 
 	return err
+}
+
+func (p *Postgres) GetOutboxes(ctx context.Context) ([]*domain.Outbox, error) {
+	var outboxes []*domain.Outbox
+
+	// limit
+	if err := p.gormDB.
+		Where("sent_at IS NULL").
+		Order("id asc").
+		Limit(10).
+		Find(&outboxes).Error; err != nil {
+		return nil, fmt.Errorf("failed to get outboxes: %w", err)
+	}
+
+	return outboxes, nil
+}
+
+func (p *Postgres) MarkOutboxesAsSent(ctx context.Context, ids []uint) error {
+	if err := p.gormDB.Model(&domain.Outbox{}).Where("id in ?", ids).Updates(map[string]interface{}{"sent_at": time.Now()}).Error; err != nil {
+		return fmt.Errorf("mark outboxes as sent: %w", err)
+	}
+
+	return nil
 }
