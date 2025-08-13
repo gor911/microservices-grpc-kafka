@@ -2,6 +2,8 @@
 
 There are 2 microservices [order-service](order-service) and [inventory-service](inventory-service).
 
+Used Kafka producer and consumer, fastHTTP, gRPC, GORM, PostgreSQL.
+
 Order service functionality:
 
 * Accept POST /orders request to create order.
