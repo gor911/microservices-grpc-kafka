@@ -4,9 +4,11 @@ import (
 	"errors"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/adapter/postgres"
 	grpcc "github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpc"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/kafkaconsumer"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/logger"
 	"github.com/joho/godotenv"
 )
@@ -24,10 +26,11 @@ type App struct {
 }
 
 type Config struct {
-	App      App
-	GRPC     grpcc.Config
-	Postgres postgres.Config
-	Logger   logger.Config
+	App           App
+	GRPC          grpcc.Config
+	Postgres      postgres.Config
+	Logger        logger.Config
+	KafkaConsumer kafkaconsumer.Config
 }
 
 func InitConfig() (Config, error) {
@@ -57,6 +60,12 @@ func InitConfig() (Config, error) {
 	}
 
 	c, err = initGRPCConfig(c)
+
+	if err != nil {
+		return c, err
+	}
+
+	c, err = initKafkaConsumerConfig(c)
 
 	if err != nil {
 		return c, err
@@ -137,6 +146,18 @@ func initGRPCConfig(c Config) (Config, error) {
 	if c.GRPC.Addr == "" {
 		return c, errors.New("missing GRPC_ADDR")
 	}
+
+	return c, nil
+}
+
+func initKafkaConsumerConfig(c Config) (Config, error) {
+	brokers := os.Getenv("KAFKA_BROKERS")
+
+	if brokers == "" {
+		return c, errors.New("missing KAFKA_BROKERS")
+	}
+
+	c.KafkaConsumer.Brokers = strings.Split(brokers, ",")
 
 	return c, nil
 }

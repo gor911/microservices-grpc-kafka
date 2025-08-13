@@ -10,6 +10,7 @@ import (
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/config"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/adapter/postgres"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpc"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/kafkaconsumer"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/logger"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/service"
 )
@@ -39,6 +40,15 @@ func run(ctx context.Context, config config.Config) error {
 
 	inventoryService := service.NewInventory(pg, log)
 
+	config.KafkaConsumer.Topic = "order.created"
+	kafkaConsumer := kafkaconsumer.NewConsumer(config.KafkaConsumer, log, inventoryService.HandleProductStock)
+
+	go func() {
+		if err := kafkaConsumer.Consume(ctx); err != nil {
+			panic(err)
+		}
+	}()
+
 	grpcServer := grpc.New(inventoryService, log, config.GRPC)
 
 	go func() {
@@ -59,6 +69,10 @@ func run(ctx context.Context, config config.Config) error {
 
 	if err := pg.Close(ctx); err != nil {
 		log.Error("could not close postgres connection", "error", err)
+	}
+
+	if err := kafkaConsumer.Close(); err != nil {
+		log.Error("could not close kafka consumer", "error", err)
 	}
 
 	grpcServer.Shutdown()

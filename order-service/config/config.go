@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/grpcclient"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/kafkaproducer"
@@ -174,7 +175,7 @@ func initKafkaProducerConfig(c Config) (Config, error) {
 		return c, errors.New("missing KAFKA_BROKERS")
 	}
 
-	c.KafkaProducer.Brokers = []string{brokers}
+	c.KafkaProducer.Brokers = strings.Split(brokers, ",")
 
 	return c, nil
 }

@@ -13,7 +13,8 @@ Order service functionality:
 Inventory service functionality:
 
 * gRPC server
-* returns products info
+* Returns products info
+* Consume messages from kafka
 
 
 Nice to have processed_events table to prevent double consuming from Kafka.
