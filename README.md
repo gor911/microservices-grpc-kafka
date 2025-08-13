@@ -2,6 +2,18 @@
 
 There are 2 microservices [order-service](order-service) and [inventory-service](inventory-service).
 
+Order service functionality:
+
+* Accept POST /orders request to create order.
+* gRPC call to Inventory Service to get products info.
+* Save order (status = PENDING) and order items
+* Insert event into outbox in same transaction
+
+Inventory service functionality:
+
+* gRPC server
+* returns products info
+
 To run microservices use:
 
 `docker compose up -d`
