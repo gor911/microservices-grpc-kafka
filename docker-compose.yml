@@ -1,0 +1,133 @@
+version: "3.8"
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:8.0.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # KRaft basics
+      CLUSTER_ID: "q1Sh73bURrGv3Ih3aYhY0Q"         # <-- keep your ID here
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+
+      # Listeners (keep it simple)
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+
+      # Single-broker factors
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 102
+      start_period: 20s
+
+  postgres_order:
+    image: postgres:17.5
+    container_name: postgres_order
+    environment:
+      POSTGRES_USER: order
+      POSTGRES_PASSWORD: order
+      POSTGRES_DB: orderdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg-order-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U order -d orderdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  postgres_inventory:
+    image: postgres:17.5
+    container_name: postgres_inventory
+    environment:
+      POSTGRES_USER: inv
+      POSTGRES_PASSWORD: inv
+      POSTGRES_DB: invdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg-inv-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inv -d invdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  order-service:
+    image: golang:1.24.6
+    working_dir: /app
+    volumes:
+      - ./order-service:/app
+    command: go run ./cmd/app/main.go
+    container_name: order-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres_order:
+        condition: service_healthy
+    environment:
+      APP_ENV: local
+      DB_HOST: postgres_order
+      DB_PORT: "5432"
+      DB_USER: order
+      DB_PASSWORD: order
+      DB_NAME: orderdb
+
+      HTTP_ADDR: ":8080"
+      KAFKA_BROKERS: "kafka:9092"
+      INVENTORY_ADDR: "inventory-service:50051"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  inventory-service:
+    image: golang:1.24.6
+    working_dir: /app
+    volumes:
+      - ./inventory-service:/app
+    command: go run ./cmd/app/main.go
+    container_name: inventory-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres_inventory:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres_inventory
+      DB_PORT: "5432"
+      DB_USER: inv
+      DB_PASSWORD: inv
+      DB_NAME: invdb
+
+      GRPC_ADDR: ":50051"
+      KAFKA_BROKERS: "kafka:9092"
+    ports:
+      - "50051:50051"
+
+volumes:
+  kafka-data:
+  pg-order-data:
+  pg-inv-data:
