@@ -9,8 +9,8 @@ import (
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/grpcclient"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/kafkaproducer"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/postgres"
-	"github.com/gor911/microservices-grpc-kafka/order-service/internal/httpserver"
-	"github.com/gor911/microservices-grpc-kafka/order-service/internal/logger"
+	"github.com/gor911/microservices-grpc-kafka/order-service/pkg/httpserver"
+	"github.com/gor911/microservices-grpc-kafka/order-service/pkg/logger"
 	"github.com/joho/godotenv"
 )
 

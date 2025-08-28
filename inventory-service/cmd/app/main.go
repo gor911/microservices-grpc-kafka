@@ -9,10 +9,11 @@ import (
 
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/config"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/adapter/postgres"
-	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpc"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpchandler"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpcserver"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/kafkaconsumer"
-	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/logger"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/service"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/pkg/logger"
 )
 
 func main() {
@@ -49,7 +50,7 @@ func run(ctx context.Context, config config.Config) error {
 		}
 	}()
 
-	grpcServer := grpc.New(inventoryService, log, config.GRPC)
+	grpcServer := grpcserver.New(grpchandler.New(inventoryService), log, config.GRPC)
 
 	go func() {
 		if err := grpcServer.Listen(); err != nil {

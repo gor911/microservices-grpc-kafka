@@ -13,9 +13,9 @@ import (
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/adapter/postgres"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/controller/http"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/controller/publisher"
-	"github.com/gor911/microservices-grpc-kafka/order-service/internal/httpserver"
-	"github.com/gor911/microservices-grpc-kafka/order-service/internal/logger"
 	"github.com/gor911/microservices-grpc-kafka/order-service/internal/service"
+	"github.com/gor911/microservices-grpc-kafka/order-service/pkg/httpserver"
+	"github.com/gor911/microservices-grpc-kafka/order-service/pkg/logger"
 )
 
 func main() {

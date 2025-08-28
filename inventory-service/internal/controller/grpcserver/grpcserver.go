@@ -1,11 +1,11 @@
-package grpc
+package grpcserver
 
 import (
 	"fmt"
 	"log/slog"
 	"net"
 
-	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/service"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpchandler"
 	invpb "github.com/gor911/microservices-grpc-kafka/inventory-service/pkg/grpc/inventorypb"
 	"google.golang.org/grpc"
 )
@@ -15,15 +15,14 @@ type Config struct {
 }
 
 type Server struct {
-	invpb.UnimplementedInventoryServer
-	inventoryService *service.Inventory
-	grpc             *grpc.Server
-	logger           *slog.Logger
-	config           Config
+	handler *grpchandler.Handlers
+	grpc    *grpc.Server
+	logger  *slog.Logger
+	config  Config
 }
 
-func New(i *service.Inventory, logger *slog.Logger, c Config) *Server {
-	return &Server{inventoryService: i, logger: logger, config: c}
+func New(i *grpchandler.Handlers, logger *slog.Logger, c Config) *Server {
+	return &Server{handler: i, logger: logger, config: c}
 }
 
 func (s *Server) Listen() error {
@@ -34,7 +33,7 @@ func (s *Server) Listen() error {
 	}
 
 	s.grpc = grpc.NewServer()
-	invpb.RegisterInventoryServer(s.grpc, s)
+	invpb.RegisterInventoryServer(s.grpc, s.handler)
 	s.logger.Debug("grpc server listening on " + s.config.Addr)
 
 	return s.grpc.Serve(lis)

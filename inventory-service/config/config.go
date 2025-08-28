@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/adapter/postgres"
-	grpcc "github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpc"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpcserver"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/kafkaconsumer"
-	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/logger"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/pkg/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -27,7 +27,7 @@ type App struct {
 
 type Config struct {
 	App           App
-	GRPC          grpcc.Config
+	GRPC          grpcserver.Config
 	Postgres      postgres.Config
 	Logger        logger.Config
 	KafkaConsumer kafkaconsumer.Config
