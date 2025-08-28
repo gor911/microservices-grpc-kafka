@@ -10,10 +10,12 @@ import (
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/config"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/adapter/postgres"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpchandler"
-	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpcserver"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/kafkaconsumer"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/service"
+	invpb "github.com/gor911/microservices-grpc-kafka/inventory-service/pkg/grpc/inventorypb"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/pkg/grpcserver"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/pkg/logger"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -50,7 +52,14 @@ func run(ctx context.Context, config config.Config) error {
 		}
 	}()
 
-	grpcServer := grpcserver.New(grpchandler.New(inventoryService), log, config.GRPC)
+	gh := grpchandler.New(inventoryService)
+	grpcServer, err := grpcserver.New(func(gs *grpc.Server) {
+		invpb.RegisterInventoryServer(gs, gh)
+	}, log, config.GRPC)
+
+	if err != nil {
+		return fmt.Errorf("could not create grpc server: %w", err)
+	}
 
 	go func() {
 		if err := grpcServer.Listen(); err != nil {

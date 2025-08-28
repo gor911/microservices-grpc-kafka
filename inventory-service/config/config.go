@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/adapter/postgres"
-	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/grpcserver"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/internal/controller/kafkaconsumer"
+	"github.com/gor911/microservices-grpc-kafka/inventory-service/pkg/grpcserver"
 	"github.com/gor911/microservices-grpc-kafka/inventory-service/pkg/logger"
 	"github.com/joho/godotenv"
 )
